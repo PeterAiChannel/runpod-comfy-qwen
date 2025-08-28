@@ -5,8 +5,6 @@ set -e
 # CẤU HÌNH
 # =========================
 WORKDIR="/workspace"
-JUPYTER_TOKEN=""      # để trống = không cần token, đặt chuỗi nếu muốn bảo vệ
-JUPYTER_PORT="8888"
 
 mkdir -p "$WORKDIR"
 cd "$WORKDIR"
@@ -14,23 +12,21 @@ cd "$WORKDIR"
 # =========================
 # ONE-TIME SETUP (idempotent)
 # =========================
-if [ ! -f "$WORKDIR/.jupyter_only_setup_done" ]; then
-  echo "[SETUP] Creating Python venv & installing minimal deps..."
+if [ ! -f "$WORKDIR/.comfy_only_setup_done" ]; then
+  echo "[SETUP] Creating Python venv..."
   python3 -m venv venv
   source venv/bin/activate
   pip install --upgrade pip wheel
 
-  echo "[SETUP] Installing JupyterLab..."
-  pip install jupyterlab
-
-  echo "[SETUP] Cloning ComfyUI (no models, no custom nodes)..."
+  echo "[SETUP] Cloning ComfyUI..."
   if [ ! -d "$WORKDIR/ComfyUI" ]; then
     git clone https://github.com/comfyanonymous/ComfyUI.git
   fi
+
   echo "[SETUP] Installing ComfyUI requirements..."
   pip install -r ComfyUI/requirements.txt || true
 
-  touch "$WORKDIR/.jupyter_only_setup_done"
+  touch "$WORKDIR/.comfy_only_setup_done"
   echo "[SETUP] Done."
 else
   echo "[SETUP] Already initialized. Skipping setup."
@@ -38,12 +34,10 @@ else
 fi
 
 # =========================
-# RUN JUPYTER ONLY
+# KHÔNG CHẠY GÌ HẾT — chỉ chuẩn bị xong môi trường
 # =========================
-echo "[RUN] Starting JupyterLab on 0.0.0.0:${JUPYTER_PORT} (root_dir=${WORKDIR})"
-exec jupyter lab \
-  --ServerApp.ip=0.0.0.0 \
-  --ServerApp.port="${JUPYTER_PORT}" \
-  --ServerApp.token="${JUPYTER_TOKEN}" \
-  --ServerApp.root_dir="${WORKDIR}" \
-  --ServerApp.open_browser=False
+echo "[INFO] ComfyUI setup is ready at $WORKDIR/ComfyUI"
+echo "[INFO] Để chạy ComfyUI thủ công, mở terminal và gõ:"
+echo "   cd /workspace/ComfyUI"
+echo "   source /workspace/venv/bin/activate"
+echo "   python main.py --listen 0.0.0.0 --port 8188"
